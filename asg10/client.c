@@ -1,3 +1,13 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<unistd.h>
+#include<arpa/inet.h>
+#include<netinet/in.h>
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 4560
 int main(){
         struct sockaddr_in client, server;
         int sd, n, count=0;
