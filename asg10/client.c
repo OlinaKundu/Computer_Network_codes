@@ -1,42 +1,38 @@
-#include <stdio.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 6555
-
 int main(){
-	struct sockaddr_in server;
-	int sd,counter=0,w=2,ack,i;
-	char msg[]= "HELLOGUYS";
-	int total = strlen(msg);
-	bzero((char *)&server, sizeof(server));
-	server.sin_family=AF_INET;
-	server.sin_addr.s_addr=inet_addr(SERVER_IP);
-	server.sin_port=htons(SERVER_PORT);
+        struct sockaddr_in client, server;
+        int sd, n, count=0;
+        char msg[512], msg1[512], ack[512];
 
-	sd= socket(AF_INET,SOCK_STREAM,0);
-	connect(sd,(struct sockaddr*)&server, sizeof(server));
-	while(counter<total){
-		int frames_in_window = 0;
-	//send window
-		for(i=counter;i<w+counter && i<total; i++){
-			printf("Sending frame: %c\n",msg[i]);
-			send(sd,&msg[i],sizeof(char),0);
-			frames_in_window++;
-		}
+        bzero((char *)&server, sizeof(server));
+        server.sin_family = AF_INET;
+        server.sin_addr.s_addr = inet_addr(SERVER_IP);
+        server.sin_port = htons(SERVER_PORT);
 
-	//receive acks for the frames sent in this window
-		for(i=0;i<frames_in_window;i++){
-			recv(sd,&ack, sizeof(int),0);
-			printf("Reciever Ack: %d\n",ack);
-			// the last ack recieved tells us the new base
-			counter =ack;
-		}
-		printf("---Window slid to index:%d---\n",counter);
-	}
-	close(sd);
-	return 0;
+        sd = socket(AF_INET, SOCK_STREAM, 0);
+        connect(sd, (struct sockaddr *)&server, sizeof(server));
+
+        do{
+                printf("\nenter a message:");
+                scanf("%s", msg);
+                printf("\nenter wndow size:");
+                scanf("%d", &n);
+
+                int i, j = 0;
+                for(i = 0; i < strlen(msg); i++){
+                        if(j < n){
+                                msg1[j++] = msg[i];
+                        }
+
+                        if(j == n || i == strlen(msg) - 1){
+                                msg1[j] = '\0';
+                                send(sd, msg1, strlen(msg1)+1, 0);
+                                memset(ack, 0x0, 512);
+                                recv(sd, ack, 512, 0);
+                                count++;
+                                printf("\n%s %d\n", ack, count);
+                                j = 0;
+                        }
+                }
+        }while(strcmp(msg, "stop"));
+        return 0;
 }
